@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Metrics Demo - Cap'n Web RPC Go</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #007acc;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        .demo-section {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+        .chart-container {
+            height: 300px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .metric:last-child {
+            border-bottom: none;
+        }
+        .metric-label {
+            font-weight: 500;
+        }
+        .metric-value {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .progress-bar {
+            width: 100px;
+            height: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-left: 10px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
+            transition: width 0.3s ease;
+        }
+        button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px 10px 0;
+        }
+        button:hover {
+            background: #005a99;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        button.danger {
+            background: #dc3545;
+        }
+        button.danger:hover {
+            background: #c82333;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        .status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.connecting {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .info {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #007acc;
+            margin-bottom: 20px;
+        }
+        .timestamp {
+            font-size: 12px;
+            color: #666;
+            font-family: 'Monaco', 'Courier New', monospace;
+        }
+        .mini-chart {
+            height: 60px;
+            width: 120px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            margin-left: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        .chart-line {
+            position: absolute;
+            bottom: 0;
+            width: 2px;
+            background: #007acc;
+            transition: height 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <h1>💻 System Metrics Demo - Real-time Monitoring</h1>
+    
+    <div class="info">
+        <p><strong>This demo showcases:</strong></p>
+        <ul>
+            <li>💻 Live system metrics with automatic updates</li>
+            <li>🔄 Subscription-based data feeds</li>
+            <li>📊 Real-time data visualization</li>
+            <li>🔌 WebSocket Server Push technology</li>
+        </ul>
+    </div>
+
+    <div class="status" id="connectionStatus">
+        <span id="statusText">🔄 Connecting to server...</span>
+    </div>
+
+    <div class="demo-section">
+        <h3>Connection Controls</h3>
+        <button onclick="connectToServer()" id="connectBtn">Connect</button>
+        <button onclick="subscribeToMetrics()" id="metricsBtn" disabled>Subscribe to System Metrics</button>
+        <button onclick="unsubscribeAll()" id="unsubscribeBtn" class="danger" disabled>Unsubscribe</button>
+    </div>
+
+    <div class="demo-section">
+        <h3>💻 System Metrics</h3>
+        <div id="metricsSubscriptionStatus">Not subscribed</div>
+        <div class="chart-container">
+            <div class="metric">
+                <span class="metric-label">CPU Usage</span>
+                <div style="display: flex; align-items: center;">
+                    <span class="metric-value" id="cpuValue">0%</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="cpuProgress" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Memory Usage</span>
+                <div style="display: flex; align-items: center;">
+                    <span class="metric-value" id="memoryValue">0%</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="memoryProgress" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Network I/O</span>
+                <div style="display: flex; align-items: center;">
+                    <span class="metric-value" id="networkValue">0 MB/s</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="networkProgress" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Last Updated</span>
+                <span class="timestamp" id="metricsTimestamp">Never</span>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="client.mjs"></script>
+</body>
+</html>
