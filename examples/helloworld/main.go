@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/gocapnweb"
-	"github.com/labstack/echo/v4"
 )
 
 // HelloServer implements a simple "hello" RPC method.
