@@ -7,7 +7,6 @@ import (
 	"os"
 
 	"github.com/gocapnweb"
-	"github.com/labstack/echo/v4"
 )
 
 // User represents a user object.

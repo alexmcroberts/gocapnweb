@@ -248,19 +248,25 @@ func (s *RpcSession) resolvePipelineReferences(sessionData *SessionData, value i
 							return nil, err
 						}
 
-						// Cache the result
+						// Normalize the result for pipeline traversal
+						normalizedResult, err := s.normalizeResult(result)
+						if err != nil {
+							return nil, err
+						}
+
+						// Cache the normalized result
 						sessionData.mu.Lock()
-						sessionData.PendingResults[refExportID] = result
+						sessionData.PendingResults[refExportID] = normalizedResult
 						delete(sessionData.PendingOperations, refExportID)
 						sessionData.mu.Unlock()
 
 						// If there's a path, traverse it
 						if len(v) >= 3 {
 							if pathArray, ok := v[2].([]interface{}); ok {
-								return s.traversePath(result, pathArray)
+								return s.traversePath(normalizedResult, pathArray)
 							}
 						}
-						return result, nil
+						return normalizedResult, nil
 					}
 					sessionData.mu.RUnlock()
 
@@ -384,16 +390,22 @@ func (s *RpcSession) handlePull(sessionData *SessionData, exportID int) ([]inter
 			return s.createErrorResponse(exportID, "MethodError", err.Error()), nil
 		}
 
-		// Store the result for future reference
+		// Normalize the result to ensure it's JSON-compatible for pipeline traversal
+		normalizedResult, err := s.normalizeResult(result)
+		if err != nil {
+			return s.createErrorResponse(exportID, "SerializationError", err.Error()), nil
+		}
+
+		// Store the normalized result for future reference
 		sessionData.mu.Lock()
-		sessionData.PendingResults[exportID] = result
+		sessionData.PendingResults[exportID] = normalizedResult
 		sessionData.mu.Unlock()
 
 		// Send as resolve
-		if _, ok := result.([]interface{}); ok {
-			return []interface{}{"resolve", exportID, []interface{}{result}}, nil
+		if _, ok := normalizedResult.([]interface{}); ok {
+			return []interface{}{"resolve", exportID, []interface{}{normalizedResult}}, nil
 		}
-		return []interface{}{"resolve", exportID, result}, nil
+		return []interface{}{"resolve", exportID, normalizedResult}, nil
 	}
 	sessionData.mu.RUnlock()
 
@@ -416,4 +428,29 @@ func (s *RpcSession) handleRelease(sessionData *SessionData, exportID, refcount 
 func (s *RpcSession) handleAbort(sessionData *SessionData, errorData interface{}) {
 	errorBytes, _ := json.Marshal(errorData)
 	log.Printf("Abort received: %s", string(errorBytes))
+}
+
+// normalizeResult ensures that Go structs are converted to map[string]interface{}
+// for proper pipeline traversal. This is necessary because Go structs need to be
+// JSON-marshaled and then unmarshaled to become navigable objects.
+func (s *RpcSession) normalizeResult(result interface{}) (interface{}, error) {
+	// If it's already a map[string]interface{} or basic type, return as-is
+	switch result.(type) {
+	case map[string]interface{}, []interface{}, string, float64, bool, nil:
+		return result, nil
+	}
+
+	// For other types (like structs), marshal to JSON and unmarshal to interface{}
+	// This converts structs to map[string]interface{} which can be traversed
+	jsonBytes, err := json.Marshal(result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal result: %w", err)
+	}
+
+	var normalized interface{}
+	if err := json.Unmarshal(jsonBytes, &normalized); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal result: %w", err)
+	}
+
+	return normalized, nil
 }
