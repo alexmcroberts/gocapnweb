@@ -4,9 +4,10 @@
   
   let api = null;
   let isConnected = false;
-  let nameInput = 'World';
-  let output = 'Ready to connect...';
-  let isLoading = false;
+  let nameInput = $state('World');
+  let output = $state('Ready to connect...');
+  let isLoading = $state(false);
+  let outputElement;
 
   // Initialize the WebSocket connection
   async function initConnection() {
@@ -104,24 +105,24 @@
       <input 
         type="text" 
         bind:value={nameInput}
-        on:keypress={handleKeyPress}
+        onkeypress={handleKeyPress}
         placeholder="Enter your name"
         disabled={isLoading}
       >
       <button 
-        on:click={sayHello} 
+        onclick={sayHello} 
         disabled={isLoading}
         class:loading={isLoading}
       >
         {isLoading ? 'Calling...' : 'Say Hello'}
       </button>
-      <button on:click={clearOutput} disabled={isLoading}>
+      <button onclick={clearOutput} disabled={isLoading}>
         Clear Output
       </button>
     </div>
     
     <h4>Output:</h4>
-    <div class="output" bind:this={output}>{output}</div>
+    <div class="output" bind:this={outputElement}>{output}</div>
   </div>
 </main>
 
