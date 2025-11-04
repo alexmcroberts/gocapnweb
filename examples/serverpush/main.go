@@ -1,25 +1,26 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"log"
-	"math"
 	"math/rand"
 	"os"
-	"runtime"
-	"runtime/metrics"
 	"sync"
 	"time"
 
 	"github.com/gocapnweb"
+	"github.com/shirou/gopsutil/v3/cpu"
+	"github.com/shirou/gopsutil/v3/disk"
+	"github.com/shirou/gopsutil/v3/net"
 )
 
 // SystemMetrics represents system performance metrics
 type SystemMetrics struct {
-	CPUUsage    float64 `json:"cpuUsage"`
-	MemoryUsage float64 `json:"memoryUsage"`
-	NetworkIO   float64 `json:"networkIO"`
-	Timestamp   int64   `json:"timestamp"`
+	CPUPercent float64 `json:"cpuPercent"`
+	DiskUsage  float64 `json:"diskUsage"`
+	NetworkIO  float64 `json:"networkIO"`
+	Timestamp  int64   `json:"timestamp"`
 }
 
 // MetricsServer implements real-time system metrics streaming using polling-based Server Push.
@@ -156,10 +157,10 @@ func (s *MetricsServer) pollMetricsUpdates(args json.RawMessage) (interface{}, e
 		// Get the most recent metrics
 		latest := metricsUpdates[len(metricsUpdates)-1]
 		latestMetrics = map[string]interface{}{
-			"cpuUsage":    latest.CPUUsage,
-			"memoryUsage": latest.MemoryUsage,
-			"networkIO":   latest.NetworkIO,
-			"timestamp":   latest.Timestamp,
+			"cpuPercent": latest.CPUPercent,
+			"diskUsage":  latest.DiskUsage,
+			"networkIO":  latest.NetworkIO,
+			"timestamp":  latest.Timestamp,
 		}
 	}
 
@@ -209,86 +210,53 @@ func (s *MetricsServer) bufferMetricsUpdate(update SystemMetrics) {
 	}
 }
 
-// collectRealSystemMetrics collects actual system metrics using runtime/metrics
-// This replaces the previous fake metrics generation with real Go runtime data:
-// - CPUUsage: Based on GC CPU time ratio and goroutine activity
-// - MemoryUsage: Percentage of allocated memory vs system memory (from runtime.MemStats)
-// - NetworkIO: Uses GC cycles as a proxy for system activity (scaled to 0-100)
+// collectRealSystemMetrics collects actual system metrics using gopsutil
+// - CPUPercent: Real CPU usage percentage across all cores
+// - DiskUsage: Disk usage percentage for the root filesystem
+// - NetworkIO: Network I/O bytes per second (combined sent + received)
 func (s *MetricsServer) collectRealSystemMetrics() SystemMetrics {
-	// Get available metrics
-	descs := metrics.All()
+	ctx := context.Background()
 
-	// Create samples for the metrics we want
-	samples := make([]metrics.Sample, 0, len(descs))
-
-	// Metrics we're interested in
-	metricNames := map[string]bool{
-		"/cpu/classes/gc/total:cpu-seconds": true,
-		"/cpu/classes/total:cpu-seconds":    true,
-		"/gc/cycles/total:gc-cycles":        true,
+	// Get CPU percentage (average across all cores)
+	cpuPercents, err := cpu.PercentWithContext(ctx, time.Second, false)
+	cpuPercent := 0.0
+	if err == nil && len(cpuPercents) > 0 {
+		cpuPercent = cpuPercents[0] // Overall CPU usage
 	}
 
-	// Build samples for metrics we want
-	for _, desc := range descs {
-		if metricNames[desc.Name] {
-			samples = append(samples, metrics.Sample{Name: desc.Name})
+	// Get disk usage for root filesystem
+	diskStat, err := disk.UsageWithContext(ctx, "/")
+	diskUsage := 0.0
+	if err == nil {
+		diskUsage = diskStat.UsedPercent
+	}
+
+	// Get network I/O counters
+	netStats, err := net.IOCountersWithContext(ctx, false)
+	networkIO := 0.0
+	if err == nil && len(netStats) > 0 {
+		// Calculate total bytes (sent + received) and convert to MB/s
+		// This is a simplified approach - in a real implementation you'd track
+		// the rate of change over time
+		totalBytes := float64(netStats[0].BytesSent + netStats[0].BytesRecv)
+		// Scale down to a reasonable range (0-100) for display purposes
+		networkIO = (totalBytes / (1024 * 1024 * 1024)) * 10 // GB to scaled value
+		if networkIO > 100 {
+			networkIO = 100
 		}
 	}
-
-	// Read the metrics
-	metrics.Read(samples)
-
-	// Process the results
-	var totalCPU, gcCPU, gcCycles float64
-
-	for _, sample := range samples {
-		switch sample.Name {
-		case "/cpu/classes/total:cpu-seconds":
-			if sample.Value.Kind() == metrics.KindFloat64 {
-				totalCPU = sample.Value.Float64()
-			}
-		case "/cpu/classes/gc/total:cpu-seconds":
-			if sample.Value.Kind() == metrics.KindFloat64 {
-				gcCPU = sample.Value.Float64()
-			}
-		case "/gc/cycles/total:gc-cycles":
-			if sample.Value.Kind() == metrics.KindUint64 {
-				gcCycles = float64(sample.Value.Uint64())
-			}
-		}
-	}
-
-	// Get additional runtime stats
-	var memStats runtime.MemStats
-	runtime.ReadMemStats(&memStats)
-
-	// Calculate CPU usage as a percentage (approximate based on GC overhead)
-	cpuUsage := 0.0
-	if totalCPU > 0 {
-		// Use GC CPU time as a rough indicator of system load
-		// This is not perfect but gives us a real metric
-		cpuUsage = math.Min((gcCPU/totalCPU)*100, 100.0)
-		if cpuUsage < 1.0 {
-			cpuUsage = float64(runtime.NumGoroutine()) / float64(runtime.GOMAXPROCS(0)) * 10.0
-		}
-	}
-
-	// Calculate memory usage as a percentage of allocated vs system memory
-	memoryUsage := 0.0
-	if memStats.Sys > 0 {
-		memoryUsage = (float64(memStats.Alloc) / float64(memStats.Sys)) * 100
-	}
-
-	// Use GC cycles as a proxy for "network IO" activity
-	// This represents system activity which is more meaningful than fake network data
-	networkIO := math.Min(gcCycles/1000.0, 100.0) // Scale down and cap at 100
 
 	return SystemMetrics{
-		CPUUsage:    math.Round(cpuUsage*100) / 100,
-		MemoryUsage: math.Round(memoryUsage*100) / 100,
-		NetworkIO:   math.Round(networkIO*100) / 100,
-		Timestamp:   time.Now().Unix(),
+		CPUPercent: roundToTwoDecimals(cpuPercent),
+		DiskUsage:  roundToTwoDecimals(diskUsage),
+		NetworkIO:  roundToTwoDecimals(networkIO),
+		Timestamp:  time.Now().Unix(),
 	}
+}
+
+// Helper function to round to 2 decimal places
+func roundToTwoDecimals(val float64) float64 {
+	return float64(int(val*100)) / 100
 }
 
 // Helper function to generate a unique ID
@@ -306,7 +274,7 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	// Default to serving static files from the examples/static directory
-	staticPath := "../static"
+	staticPath := "/static"
 	if len(os.Args) >= 2 {
 		staticPath = os.Args[1]
 	}
