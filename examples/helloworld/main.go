@@ -57,10 +57,8 @@ func main() {
 	gocapnweb.SetupFileEndpoint(e, "/static", staticPath)
 
 	log.Printf("🚀 Hello World Go Server (Echo) starting on port %s", port)
-	log.Printf("📁 Static files served from: %s", staticPath)
 	log.Printf("🔌 WebSocket RPC endpoint: ws://localhost%s/api", port)
-	log.Printf("📄 Static files: http://localhost%s/static/", port)
-	log.Printf("🌐 Demo URL: http://localhost%s/static/helloworld/", port)
+	log.Printf("🌐 Demo URL: http://localhost:3000 (available once you start the Svelte development server)")
 	log.Println()
 	log.Println("Try the demo:")
 	log.Printf("  curl -X POST http://localhost%s/api -d '[\"push\",[\"pipeline\",1,[\"hello\"],[\"World\"]]]'", port)

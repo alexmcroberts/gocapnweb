@@ -35,21 +35,42 @@ go get github.com/gocapnweb
    cd examples/helloworld
    go run main.go
    ```
-   Open: http://localhost:8000/static/helloworld/index.html
+
+   In a second tab:
+   ```bash
+   cd static
+   npm install
+   npm run dev
+   ```
+   Open: http://localhost:3000
 
 2. **Batch Pipelining**:
    ```bash
    cd examples/batch-pipelining  
    go run main.go
    ```
-   Open: http://localhost:8000/static/batch-pipelining/index.html
+
+   In a second tab:
+   ```bash
+   cd static
+   npm install
+   npm run dev
+   ```
+   Open: http://localhost:3000
 
 3. **Server Push**
    ```bash
    cd examples/serverpush
    go run main.go
    ```
-   Open: http://localhost:8000/static/serverpush/index.html
+
+   In a second tab:
+   ```bash
+   cd static
+   npm install
+   npm run dev
+   ```
+   Open: http://localhost:3000
 
 ## Getting Started
 

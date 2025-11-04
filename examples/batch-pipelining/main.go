@@ -173,10 +173,8 @@ func main() {
 	gocapnweb.SetupFileEndpoint(e, "/static", staticPath)
 
 	log.Printf("🚀 Batch Pipelining Go Server (Echo) starting on port %s", port)
-	log.Printf("📁 Static files served from: %s", staticPath)
 	log.Printf("🔌 HTTP Batch RPC endpoint: http://localhost%s/rpc", port)
-	log.Printf("📄 Static files: http://localhost%s/static/", port)
-	log.Printf("🌐 Demo URL: http://localhost%s/static/batch-pipelining/", port)
+	log.Printf("🌐 Demo URL: http://localhost:3000 (available once you start the Svelte development server)")
 	log.Println()
 	log.Println("Sample data:")
 	log.Println("  Session tokens: cookie-123, cookie-456")
