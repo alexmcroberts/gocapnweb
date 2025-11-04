@@ -1,0 +1,25 @@
+{
+  "name": "batch-pipelining-svelte",
+  "version": "1.0.0",
+  "description": "Batch Pipelining Cap'n Web RPC Svelte Demo",
+  "type": "module",
+  "browserslist": [
+    "Chrome >= 89",
+    "Firefox >= 89",
+    "Safari >= 15",
+    "Edge >= 89"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^3.0.0",
+    "svelte": "^4.2.0",
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "capnweb": "latest"
+  }
+}

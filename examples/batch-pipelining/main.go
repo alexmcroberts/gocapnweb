@@ -155,7 +155,7 @@ func (s *UserServer) getNotifications(args json.RawMessage) (interface{}, error)
 
 func main() {
 	// Default to serving static files from the examples/static directory
-	staticPath := "../static"
+	staticPath := "/static"
 	if len(os.Args) >= 2 {
 		staticPath = os.Args[1]
 	}
