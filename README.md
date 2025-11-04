@@ -12,7 +12,7 @@
 
 ## Status
 
-Production-ready Go implementation of the Cap'n Web RPC protocol. This is a complete rewrite of the original C++ implementation with Go best practices.
+Production-ready Go implementation of the Cap'n Web RPC protocol. This is a complete rewrite of the original C++ implementation in Go.
 
 ## Dependencies
 
@@ -26,7 +26,32 @@ Production-ready Go implementation of the Cap'n Web RPC protocol. This is a comp
 go get github.com/gocapnweb
 ```
 
-## Quick Start
+## Examples
+
+### Running the Examples
+
+1. **Hello World**:
+   ```bash
+   cd examples/helloworld
+   go run main.go
+   ```
+   Open: http://localhost:8000/static/helloworld/index.html
+
+2. **Batch Pipelining**:
+   ```bash
+   cd examples/batch-pipelining  
+   go run main.go
+   ```
+   Open: http://localhost:8000/static/batch-pipelining/index.html
+
+3. **Server Push**
+   ```bash
+   cd examples/serverpush
+   go run main.go
+   ```
+   Open: http://localhost:8000/static/serverpush/index.html
+
+## Getting Started
 
 ### Simple Hello World Server
 
@@ -162,94 +187,3 @@ const notifications = api.getNotifications(user.id);
 // All three calls made in a single HTTP request!
 const [u, p, n] = await Promise.all([user, profile, notifications]);
 ```
-
-## Examples
-
-### Running the Examples
-
-1. **Hello World**:
-   ```bash
-   cd examples/helloworld
-   go run main.go ../../capnwebcpp/examples
-   ```
-   Open: http://localhost:8000/static/helloworld/index.html
-
-2. **Batch Pipelining**:
-   ```bash
-   cd examples/batch-pipelining  
-   go run main.go ../../capnwebcpp/examples
-   ```
-   Open: http://localhost:8000/static/batch-pipelining/index.html
-
-## API Reference
-
-### SetupRpcEndpoint
-
-```go
-func SetupRpcEndpoint(router *mux.Router, path string, target RpcTarget)
-```
-
-Sets up both WebSocket and HTTP POST endpoints for RPC at the specified path.
-
-### SetupFileEndpoint
-
-```go
-func SetupFileEndpoint(router *mux.Router, urlPath string, fsRoot string)
-```
-
-Sets up static file serving with:
-- Security checks (prevents directory traversal)
-- Automatic MIME type detection
-- Index.html serving for directories
-
-### NewRpcSession
-
-```go
-func NewRpcSession(target RpcTarget) *RpcSession
-```
-
-Creates a new RPC session handler.
-
-### NewBaseRpcTarget
-
-```go
-func NewBaseRpcTarget() *BaseRpcTarget
-```
-
-Creates a base RPC target with method registration capabilities.
-
-## Thread Safety
-
-All components are designed to be thread-safe:
-- Session data uses RWMutex for concurrent access
-- Method registration is protected
-- Pipeline reference resolution is atomic
-
-## Error Handling
-
-The library provides comprehensive error handling:
-- Method not found errors
-- JSON parsing errors  
-- Pipeline reference errors
-- File serving errors
-
-Errors are automatically converted to appropriate Cap'n Web error responses.
-
-## Performance
-
-- Efficient JSON parsing and generation
-- Minimal memory allocations
-- Concurrent request handling
-- Optimized for high-throughput scenarios
-
-## Differences from C++ Version
-
-- Go-idiomatic error handling (errors vs exceptions)
-- Goroutine-safe by design
-- Standard library HTTP server (vs uWebSockets)
-- More comprehensive MIME type support
-- Better logging and debugging support
-
-## License
-
-This project is licensed under the same terms as the original capnwebcpp project.
