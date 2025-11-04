@@ -39,7 +39,7 @@ func NewHelloServer() *HelloServer {
 
 func main() {
 	// Default to serving static files from the examples/static directory
-	staticPath := "../static"
+	staticPath := "/static"
 	if len(os.Args) >= 2 {
 		staticPath = os.Args[1]
 	}
