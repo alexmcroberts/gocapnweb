@@ -1,23 +1,22 @@
 <script>
-  import { onMount, onDestroy } from 'svelte';
   import ConnectionStatus from './components/ConnectionStatus.svelte';
   import MetricCard from './components/MetricCard.svelte';
   import { 
-    isConnected, 
-    connectionStatus, 
-    connectionMessage,
-    systemMetrics,
-    metricsSubscriptionId,
-    canConnect,
-    canSubscribe,
-    canUnsubscribe,
+    getIsConnected,
+    getConnectionStatus,
+    getConnectionMessage,
+    getSystemMetrics,
+    getMetricsSubscriptionId,
+    getCanConnect,
+    getCanSubscribe,
+    getCanUnsubscribe,
     connectToServer,
     subscribeToMetrics,
     unsubscribeFromMetrics,
     cleanup
-  } from './stores/appStore.js';
+  } from './stores/appStore.svelte.js';
 
-  let isLoading = false;
+  let isLoading = $state(false);
 
   // Handle connect button click
   async function handleConnect() {
@@ -59,15 +58,15 @@
     return new Date(timestamp * 1000).toLocaleTimeString();
   }
 
-  // Auto-connect when the component mounts
-  onMount(async () => {
+  // Auto-connect when the component mounts and cleanup on destroy
+  $effect(() => {
     console.log('🚀 Server Push Demo loaded');
-    await handleConnect();
-  });
-
-  // Cleanup on destroy
-  onDestroy(() => {
-    cleanup();
+    handleConnect();
+    
+    // Return cleanup function
+    return () => {
+      cleanup();
+    };
   });
 </script>
 
@@ -86,27 +85,27 @@
     </ul>
   </div>
 
-  <ConnectionStatus status={$connectionStatus} message={$connectionMessage} />
+  <ConnectionStatus status={getConnectionStatus()} message={getConnectionMessage()} />
 
   <div class="demo-section">
     <h3>Connection Controls</h3>
     <button 
-      on:click={handleConnect} 
-      disabled={!$canConnect || isLoading}
+      onclick={handleConnect} 
+      disabled={!getCanConnect() || isLoading}
       class:loading={isLoading}
     >
       {isLoading ? 'Connecting...' : 'Connect'}
     </button>
     <button 
-      on:click={handleSubscribe} 
-      disabled={!$canSubscribe || isLoading}
+      onclick={handleSubscribe} 
+      disabled={!getCanSubscribe() || isLoading}
       class:loading={isLoading}
     >
       {isLoading ? 'Subscribing...' : 'Subscribe to System Metrics'}
     </button>
     <button 
-      on:click={handleUnsubscribe} 
-      disabled={!$canUnsubscribe || isLoading}
+      onclick={handleUnsubscribe} 
+      disabled={!getCanUnsubscribe() || isLoading}
       class="danger"
     >
       Unsubscribe
@@ -116,8 +115,8 @@
   <div class="demo-section">
     <h3>💻 System Metrics</h3>
     <div class="subscription-status">
-      {#if $metricsSubscriptionId}
-        ✅ Subscribed (ID: {$metricsSubscriptionId})
+      {#if getMetricsSubscriptionId()}
+        ✅ Subscribed (ID: {getMetricsSubscriptionId()})
       {:else}
         Not subscribed
       {/if}
@@ -126,31 +125,31 @@
     <div class="chart-container">
       <MetricCard 
         label="CPU Usage" 
-        value={$systemMetrics.cpuPercent.toFixed(1)} 
+        value={getSystemMetrics().cpuPercent.toFixed(1)} 
         unit="%" 
-        progress={$systemMetrics.cpuPercent}
+        progress={getSystemMetrics().cpuPercent}
         color="linear-gradient(90deg, #28a745, #ffc107, #dc3545)"
       />
       
       <MetricCard 
         label="Disk Usage" 
-        value={$systemMetrics.diskUsage.toFixed(1)} 
+        value={getSystemMetrics().diskUsage.toFixed(1)} 
         unit="%" 
-        progress={$systemMetrics.diskUsage}
+        progress={getSystemMetrics().diskUsage}
         color="linear-gradient(90deg, #28a745, #ffc107, #dc3545)"
       />
       
       <MetricCard 
         label="Network I/O" 
-        value={$systemMetrics.networkIO.toFixed(1)} 
+        value={getSystemMetrics().networkIO.toFixed(1)} 
         unit=" (scaled)" 
-        progress={$systemMetrics.networkIO}
+        progress={getSystemMetrics().networkIO}
         color="linear-gradient(90deg, #17a2b8, #007bff, #6f42c1)"
       />
       
       <div class="metric">
         <span class="metric-label">Last Updated</span>
-        <span class="timestamp">{formatTimestamp($systemMetrics.timestamp)}</span>
+        <span class="timestamp">{formatTimestamp(getSystemMetrics().timestamp)}</span>
       </div>
     </div>
   </div>

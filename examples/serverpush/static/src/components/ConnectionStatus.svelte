@@ -1,8 +1,14 @@
 <script>
-  export let status = 'disconnected'; // 'connected', 'connecting', 'disconnected'
-  export let message = '';
+  /**
+   * @typedef {Object} Props
+   * @property {string} [status] - 'connected', 'connecting', 'disconnected'
+   * @property {string} [message]
+   */
+
+  /** @type {Props} */
+  let { status = 'disconnected', message = '' } = $props();
   
-  $: statusClass = `status ${status}`;
+  let statusClass = $derived(`status ${status}`);
 </script>
 
 <div class={statusClass}>

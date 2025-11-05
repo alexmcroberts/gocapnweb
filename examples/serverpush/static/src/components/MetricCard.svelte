@@ -1,9 +1,21 @@
 <script>
-  export let label;
-  export let value;
-  export let unit = '%';
-  export let progress = 0;
-  export let color = '#007acc';
+  /**
+   * @typedef {Object} Props
+   * @property {any} label
+   * @property {any} value
+   * @property {string} [unit]
+   * @property {number} [progress]
+   * @property {string} [color]
+   */
+
+  /** @type {Props} */
+  let {
+    label,
+    value,
+    unit = '%',
+    progress = 0,
+    color = '#007acc'
+  } = $props();
 </script>
 
 <div class="metric">
