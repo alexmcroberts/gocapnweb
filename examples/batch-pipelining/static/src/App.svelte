@@ -4,17 +4,17 @@
   import ResultsCard from './components/ResultsCard.svelte';
   import SummaryCard from './components/SummaryCard.svelte';
   import { 
-    isRunning, 
-    status, 
-    pipelinedResults, 
-    sequentialResults, 
+    isRunning,
+    status,
+    pipelinedResults,
+    sequentialResults,
     error,
     runDemo,
     resetDemo,
     RPC_URL,
     SIMULATED_RTT_MS,
     SIMULATED_RTT_JITTER_MS
-  } from './stores/demoStore.js';
+  } from './stores/demoStore.svelte.js';
 
   // Handle run demo button click
   async function handleRunDemo() {
@@ -46,27 +46,27 @@
     <p><strong>Reactive UI:</strong> Built with Svelte for smooth, reactive user experience.</p>
   </div>
 
-  <div class="status" class:error={$error}>
-    {#if $error}
-      Error: {$error}
+  <div class="status" class:error={error()}>
+    {#if error()}
+      Error: {error()}
       <br><br>
       Make sure the Go server is running on port 8000.
     {:else}
-      {$status}
+      {status()}
     {/if}
   </div>
 
   <div class="controls">
     <button 
-      on:click={handleRunDemo} 
-      disabled={$isRunning}
-      class:loading={$isRunning}
+      onclick={handleRunDemo} 
+      disabled={isRunning()}
+      class:loading={isRunning()}
     >
-      {$isRunning ? 'Running Demo...' : 'Run Demo'}
+      {isRunning() ? 'Running Demo...' : 'Run Demo'}
     </button>
     
-    {#if $pipelinedResults || $sequentialResults}
-      <button on:click={handleReset} disabled={$isRunning}>
+    {#if pipelinedResults() || sequentialResults()}
+      <button onclick={handleReset} disabled={isRunning()}>
         Reset
       </button>
     {/if}
@@ -79,23 +79,23 @@
       jitter={SIMULATED_RTT_JITTER_MS} 
     />
 
-    {#if $pipelinedResults}
+    {#if pipelinedResults()}
       <ResultsCard 
         title="Pipelined (Batched, Single Round Trip)" 
-        results={$pipelinedResults} 
+        results={pipelinedResults()} 
       />
     {/if}
 
-    {#if $sequentialResults}
+    {#if sequentialResults()}
       <ResultsCard 
         title="Sequential (Non-Batched, Multiple Round Trips)" 
-        results={$sequentialResults} 
+        results={sequentialResults()} 
       />
     {/if}
 
     <SummaryCard 
-      pipelined={$pipelinedResults} 
-      sequential={$sequentialResults} 
+      pipelined={pipelinedResults()} 
+      sequential={sequentialResults()} 
     />
   </div>
 </main>

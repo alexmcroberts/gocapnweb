@@ -1,7 +1,5 @@
 <script>
-  export let rpcUrl;
-  export let rtt;
-  export let jitter;
+  let { rpcUrl, rtt, jitter } = $props();
 </script>
 
 <div class="config">

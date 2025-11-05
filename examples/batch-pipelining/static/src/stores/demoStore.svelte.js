@@ -1,4 +1,3 @@
-import { writable, get } from 'svelte/store';
 import { newHttpBatchRpcSession } from 'capnweb';
 
 // Configuration
@@ -7,12 +6,21 @@ export const RPC_URL = urlParams.get('rpc_url') || 'http://localhost:8000/rpc';
 export const SIMULATED_RTT_MS = Number(urlParams.get('rtt') || 120);
 export const SIMULATED_RTT_JITTER_MS = Number(urlParams.get('jitter') || 40);
 
-// Demo state
-export const isRunning = writable(false);
-export const status = writable('Ready to run demo...');
-export const pipelinedResults = writable(null);
-export const sequentialResults = writable(null);
-export const error = writable(null);
+// State using Svelte 5 runes - create a state object
+const state = $state({
+  isRunning: false,
+  status: 'Ready to run demo...',
+  pipelinedResults: null,
+  sequentialResults: null,
+  error: null
+});
+
+// Export getters for the state properties
+export const isRunning = () => state.isRunning;
+export const status = () => state.status;
+export const pipelinedResults = () => state.pipelinedResults;
+export const sequentialResults = () => state.sequentialResults;
+export const error = () => state.error;
 
 // Utility functions
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -79,36 +87,37 @@ async function runSequential() {
 }
 
 export async function runDemo() {
-  if (get(isRunning)) return;
+  // Check if already running
+  if (state.isRunning) return;
   
-  isRunning.set(true);
-  error.set(null);
-  pipelinedResults.set(null);
-  sequentialResults.set(null);
+  state.isRunning = true;
+  state.error = null;
+  state.pipelinedResults = null;
+  state.sequentialResults = null;
 
   try {
-    status.set('Running pipelined demo...');
+    state.status = 'Running pipelined demo...';
     const pipelined = await runPipelined();
-    pipelinedResults.set(pipelined);
+    state.pipelinedResults = pipelined;
 
-    status.set('Running sequential demo...');
+    state.status = 'Running sequential demo...';
     const sequential = await runSequential();
-    sequentialResults.set(sequential);
+    state.sequentialResults = sequential;
 
-    status.set('Demo complete!');
+    state.status = 'Demo complete!';
   } catch (err) {
-    status.set('Error occurred!');
-    error.set(err.message);
+    state.status = 'Error occurred!';
+    state.error = err.message;
     console.error(err);
   } finally {
-    isRunning.set(false);
+    state.isRunning = false;
   }
 }
 
 // Reset function
 export function resetDemo() {
-  pipelinedResults.set(null);
-  sequentialResults.set(null);
-  error.set(null);
-  status.set('Ready to run demo...');
+  state.pipelinedResults = null;
+  state.sequentialResults = null;
+  state.error = null;
+  state.status = 'Ready to run demo...';
 }

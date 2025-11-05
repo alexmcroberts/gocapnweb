@@ -1,8 +1,7 @@
 <script>
-  export let pipelined;
-  export let sequential;
+  let { pipelined, sequential } = $props();
   
-  $: speedup = sequential && pipelined ? (sequential.ms / pipelined.ms) : 0;
+  let speedup = $derived(sequential && pipelined ? (sequential.ms / pipelined.ms) : 0);
 </script>
 
 <div class="summary">

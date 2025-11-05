@@ -1,9 +1,16 @@
 <script>
-  export let title;
-  export let results;
-  export let showDetails = false;
+  /**
+   * @typedef {Object} Props
+   * @property {string} title
+   * @property {string} results
+   * @property {boolean} [showDetails]
+   */
+
+  /** @type {Props} */
+  let { title, results, showDetails = $bindable(false) } = $props();
   
-  function toggleDetails() {
+  function toggleDetails(event) {
+    event.preventDefault();
     showDetails = !showDetails;
   }
 </script>
@@ -14,7 +21,7 @@
   <p><strong>Time:</strong> {results.ms.toFixed(2)} ms</p>
   
   <details bind:open={showDetails}>
-    <summary on:click|preventDefault={toggleDetails}>Data received</summary>
+    <summary onclick={toggleDetails}>Data received</summary>
     {#if showDetails}
       <p><strong>Authenticated user:</strong> <code>{JSON.stringify(results.u)}</code></p>
       <p><strong>Profile:</strong> <code>{JSON.stringify(results.p)}</code></p>
