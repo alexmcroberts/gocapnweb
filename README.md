@@ -10,10 +10,6 @@
 - **Static File Serving**: Serve static files with proper MIME types and security checks
 - **Goroutine-Safe**: Thread-safe session management with proper synchronization
 
-## Status
-
-Production-ready Go implementation of the Cap'n Web RPC protocol. This is a complete rewrite of the original C++ implementation in Go.
-
 ## Dependencies
 
 - Go 1.21+
@@ -61,6 +57,20 @@ go get github.com/gocapnweb
 3. **Server Push**
    ```bash
    cd examples/serverpush
+   go run main.go
+   ```
+
+   In a second tab:
+   ```bash
+   cd static
+   npm install
+   npm run dev
+   ```
+   Open: http://localhost:3000
+
+4. **Bluesky**
+   ```bash
+   cd examples/bluesky
    go run main.go
    ```
 

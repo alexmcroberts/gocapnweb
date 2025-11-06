@@ -17,27 +17,19 @@ This example demonstrates how to use Cap'n Web RPC with AT Protocol's XRPC endpo
 
 ## Running the Example
 
-### Start the Go Backend
+1. **Start the Server**:
+   ```bash
+   go run main.go
+   ```
 
-```bash
-cd examples/bluesky
-go mod tidy
-go run main.go
-```
+2. In a new terminal, start the Svelte development server:
+   ```bash
+   cd static
+   npm install
+   npm run dev
+   ```
 
-The server will start on `http://localhost:8000`
-
-### Start the Frontend
-
-In a new terminal:
-
-```bash
-cd examples/bluesky/static
-npm install
-npm run dev
-```
-
-The Svelte dev server will start on `http://localhost:3000`
+3. Open your browser to `http://localhost:3000`
 
 ## How It Works
 
@@ -85,7 +77,7 @@ The Go backend acts as a bridge, translating Cap'n Web RPC calls to XRPC HTTP re
 
 - `bsky.app` - Official Bluesky account
 - `jay.bsky.team` - Jay Graber (Bluesky CEO)
-- `pfrazee.com` - Paul Frazee (Bluesky engineer)
+- `pfrazee.com` - Paul Frazee (Bluesky CTO)
 
 ## Testing with curl
 
@@ -119,7 +111,7 @@ Batched mode typically shows **40-60% faster** load times compared to sequential
 
 ```
 Browser (Svelte)
-    ↓ Cap'n Web RPC (batched)
+    ↓ Cap'n Web RPC
 Go Server (localhost:8000)
     ↓ HTTPS
 AT Protocol API (public.api.bsky.app)
